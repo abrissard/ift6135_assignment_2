@@ -61,9 +61,22 @@ class LSTM(nn.Module):
             - h (`torch.FloatTensor` of shape `(1, batch_size, hidden_size)`)
             - c (`torch.FloatTensor` of shape `(1, batch_size, hidden_size)`)
         """
-        # # ==========================
-        # # TODO: Write your code here
-        # # ==========================
+        batch_size = inputs.size(0)
+        sequence_length = inputs.size(1)
+        hidden_states = hidden_states[0].squeeze(0), hidden_states[1].squeeze(0)
+        outputs = []
+        for t in range(sequence_length):
+            x_t = inputs[:, t, :]
+            i_t = torch.sigmoid(torch.matmul(x_t, self.w_ii.t()) + self.b_ii)
+            f_t = torch.sigmoid(torch.matmul(x_t, self.w_if.t()) + self.b_if)
+            g_t = torch.tanh(torch.matmul(x_t, self.w_ig.t()) + self.b_ig)
+            o_t = torch.sigmoid(torch.matmul(x_t, self.w_io.t()) + self.b_io)
+            c_t = f_t * hidden_states[1] + i_t * g_t
+            h_t = o_t * torch.tanh(c_t)
+            hidden_states = h_t.unsqueeze(0), c_t.unsqueeze(0)
+            outputs.append(h_t.unsqueeze(1))
+        outputs = torch.cat(outputs, dim=1)
+        return outputs, hidden_states
 
 
 
