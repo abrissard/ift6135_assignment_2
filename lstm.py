@@ -98,7 +98,9 @@ class Encoder(nn.Module):
         )
 
         self.dropout = nn.Dropout(p=dropout)
-        self.rnn = # TODO: Write your code here
+        self.rnn = LSTM(embedding_size, hidden_size)
+
+
 
     def forward(self, inputs, hidden_states):
         """LSTM Encoder.
@@ -125,9 +127,15 @@ class Encoder(nn.Module):
             - c (`torch.FloatTensor` of shape `(2, batch_size, hidden_size)`)
         """
 
-        # # ==========================
-        # # TODO: Write your code here
-        # # ==========================
+        x = self.embedding(inputs)
+        x = self.dropout(x)
+        self.rnn = nn.LSTM(
+            input_size=self.embedding_size,
+            hidden_size=self.hidden_size,
+            batch_first=True,
+            bidirectional=True
+        )
+        return x, hidden_states
 
     def initial_states(self, batch_size, device=None):
         if device is None:
@@ -184,9 +192,51 @@ class DecoderAttn(nn.Module):
             - c (`torch.FloatTensor` of shape `(1, batch_size, hidden_size)`)
         """
 
-        # # ==========================
-        # # TODO: Write your code here
-        # # ==========================
+        x, hidden_states = self.rnn(inputs, hidden_states)
+        if self.mlp_attn is not None:
+            x, _ = self.mlp_attn(x, mask)
+        return x, hidden_states
+    
+
+class MLPAttn(nn.Module):
+    def __init__(
+        self,
+        hidden_size=256
+    ):
+        super(MLPAttn, self).__init__()
+        self.hidden_size = hidden_size
+        self.mlp = nn.Sequential(
+            nn.Linear(hidden_size, hidden_size),
+            nn.Tanh(),
+            nn.Linear(hidden_size, 1)
+        )
+
+    def forward(self, inputs, mask=None):
+        """Soft attention
+
+        This is a soft attention mechanism
+
+        Parameters
+        ----------
+        inputs (`torch.FloatTensor` of shape `(batch_size, sequence_length, hidden_size)`)
+            The input tensor containing the encoded input sequence.
+
+        mask (`torch.LongTensor` of shape `(batch_size, sequence_length)`)
+            The masked tensor containing the location of padding in the sequences.
+
+        Returns
+        -------
+        x (`torch.FloatTensor` of shape `(batch_size, hidden_size)`)
+            A feature tensor representing the input sentence for sentiment analysis
+        """
+        scores = self.mlp(inputs).squeeze(-1)
+        if mask is not None:
+            scores = scores.masked_fill(mask == 0, -1e9)
+        scores = F.softmax(scores, dim=1)
+        x = torch.bmm(scores.unsqueeze(1), inputs).squeeze(1)
+        return x, scores
+    
+
         
         
 class EncoderDecoder(nn.Module):
