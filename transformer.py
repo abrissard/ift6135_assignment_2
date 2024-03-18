@@ -165,10 +165,10 @@ class MultiHeadedAttention(nn.Module):
             definition of the input `tensor` above.
         """
 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        batch_size, sequence_length, _ = tensor.size()
+        tensor = tensor.view(batch_size, sequence_length, self.num_heads, self.head_size)
+        tensor = tensor.transpose(1, 2)
+        return tensor
         
     def merge_heads(self, tensor):
         """Merge the head vectors.
@@ -193,10 +193,10 @@ class MultiHeadedAttention(nn.Module):
             definition of the input `tensor` above.
         """
 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        batch_size, _, sequence_length, _ = tensor.size()
+        tensor = tensor.transpose(1, 2)
+        tensor = tensor.contiguous().view(batch_size, sequence_length, self.num_heads * self.head_size)
+        return tensor
 
     def forward(self, hidden_states, mask=None):
         """Multi-headed attention.
