@@ -35,10 +35,11 @@ class LayerNorm(nn.Module):
             The output tensor, having the same shape as `inputs`.
         """
 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        mean = inputs.mean(dim=-1, keepdim=True)
+        var = inputs.var(dim=-1, keepdim=True, unbiased=False)
+        normalized_inputs = (inputs - mean) / torch.sqrt(var + self.eps)
+        outputs = self.weight * normalized_inputs + self.bias
+        return outputs
 
     def reset_parameters(self):
         nn.init.ones_(self.weight)
