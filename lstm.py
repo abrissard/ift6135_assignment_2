@@ -97,9 +97,12 @@ class Encoder(nn.Module):
         )
 
         self.dropout = nn.Dropout(p=dropout)
-        self.rnn = LSTM(embedding_size, hidden_size)
-
-
+        self.rnn = nn.LSTM(
+            input_size=self.embedding_size,
+            hidden_size=self.hidden_size,
+            batch_first=True,
+            bidirectional=True
+        )
 
     def forward(self, inputs, hidden_states):
         """LSTM Encoder.
@@ -125,15 +128,10 @@ class Encoder(nn.Module):
             - h (`torch.FloatTensor` of shape `(2, batch_size, hidden_size)`)
             - c (`torch.FloatTensor` of shape `(2, batch_size, hidden_size)`)
         """
-
-        x = self.embedding(inputs)
+        inputs_long = inputs.long()
+        x = self.embedding(inputs_long)
         x = self.dropout(x)
-        self.rnn = nn.LSTM(
-            input_size=self.embedding_size,
-            hidden_size=self.hidden_size,
-            batch_first=True,
-            bidirectional=True
-        )
+        x, hidden_states = self.rnn(x, hidden_states)
         return x, hidden_states
 
     def initial_states(self, batch_size, device=None):
