@@ -6,21 +6,21 @@ class TestTransformer(unittest.TestCase):
     def setUp(self):
         self.batch_size = 32
         self.sequence_length = 10
-        self.num_heads = 4
-        self.head_size = 64
+        self.vocab_size = 100
+        self.embed_dim = 256
 
-        self.transformer = Transformer(num_heads=self.num_heads, head_size=self.head_size)
+        self.transformer = Transformer(self.vocab_size, self.embed_dim)
 
     def test_forward(self):
-        hidden_states = torch.randn(self.batch_size, self.sequence_length, self.num_heads * self.head_size)
-        mask = torch.ones(self.batch_size, self.sequence_length).long()
+        inputs = torch.randint(low=0, high=self.vocab_size, size=(self.batch_size, self.sequence_length))
+        mask = torch.ones((self.batch_size, self.sequence_length), dtype=torch.long)
 
-        outputs = self.transformer.forward(hidden_states, mask)
+        output = self.transformer.forward(inputs, mask)
 
-        # Check the shape of the outputs
-        self.assertEqual(outputs.shape, (self.batch_size, self.sequence_length, self.num_heads * self.head_size))
+        # Check the shape of the output
+        self.assertEqual(output.shape, (self.batch_size, self.embed_dim))
 
-        # Add more assertions to validate the correctness of the outputs
+        # Add more assertions if needed
 
 if __name__ == '__main__':
     unittest.main()

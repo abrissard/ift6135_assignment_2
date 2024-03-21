@@ -10,6 +10,13 @@
             "request": "launch",
             "program": "${workspaceFolder}/test_lstm.py",
             "console": "integratedTerminal"
+        },
+        {
+            "name": "Test Transformer",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/test_transformer.py",
+            "console": "integratedTerminal"
         }
     ]
 }

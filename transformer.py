@@ -99,16 +99,16 @@ class MultiHeadedAttention(nn.Module):
         
         # Apply the mask to the scaled dot product
         if mask is not None:
-            print("scaled_dot_product shape : ")
-            print(scaled_dot_product.shape)
+            # print("scaled_dot_product shape : ")
+            # print(scaled_dot_product.shape)
 
-            print("Mask og shape : ")
-            print(mask.shape)
+            # print("Mask og shape : ")
+            # print(mask.shape)
 
             mask = mask.unsqueeze(1)  # for num_heads dimension
             mask = mask.unsqueeze(2)  # for sequence_length dimension
-            print("Mask unsqueezed shape : ")
-            print(mask.shape)
+            # print("Mask unsqueezed shape : ")
+            # print(mask.shape)
 
             mask = mask.bool()
             mask = ~mask
@@ -411,7 +411,6 @@ class Transformer(nn.Module):
             A tensor containing the output from the mlp_head.
         """
         # Preprocess input
-        
         x = self.embedding(x)
         B, T, _ = x.shape
 
@@ -422,12 +421,15 @@ class Transformer(nn.Module):
 
         #Add dropout and then the transformer (remember to update the mask because of the CLS token)
         x = self.dropout(x)
-        mask = torch.cat([torch.ones(B, 1).long(), mask], dim=1)
+        if mask is not None:
+            mask = torch.cat([torch.ones(B, 1).long(), mask], dim=1)
+
         for layer in self.transformer:
             x = layer(x, mask)
         
         #Take the cls token representation and send it to mlp_head
-        cls_token = x[:,0]
-        output = self.mlp_head(cls_token)
+        cls_token_representation = x[:,0]
+        output = self.mlp_head(cls_token_representation)
+        
         return output
     
