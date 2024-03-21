@@ -89,10 +89,21 @@ class MultiHeadedAttention(nn.Module):
             Tensor containing the attention weights for all the heads and all
             the sequences in the batch.
         """
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+
+        # Compute the dot product of queries and keys
+        dot_product = torch.matmul(queries, keys.transpose(-2, -1))
+        
+        # Scale the dot product by the square root of the head size
+        scaled_dot_product = dot_product / math.sqrt(self.head_size)
+        
+        # Apply the mask to the scaled dot product
+        if mask is not None:
+            scaled_dot_product = scaled_dot_product.masked_fill(mask.unsqueeze(1).unsqueeze(2), float('-inf'))
+        
+        # Apply the softmax function to get the attention weights
+        attention_weights = F.softmax(scaled_dot_product, dim=-1)
+        
+        return attention_weights
         
     def apply_attention(self, queries, keys, values, mask=None):
         """Apply the attention.
