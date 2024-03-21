@@ -190,11 +190,11 @@ class DecoderAttn(nn.Module):
         """
 
         if self.mlp_attn is not None:
-            # if mask is not None:
-            #     x = mask.unsqueeze(-1) * inputs
-            x = self.mlp_attn(inputs, mask)
+            x = self.mlp_attn.forward(inputs, mask)
+            x, hidden_states = self.rnn(x, hidden_states)
 
-        x, hidden_states = self.rnn(inputs, hidden_states)
+        else:
+            x, hidden_states = self.rnn(inputs, hidden_states)
 
         return x, hidden_states
         

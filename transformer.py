@@ -111,6 +111,7 @@ class MultiHeadedAttention(nn.Module):
             print(mask.shape)
 
             mask = mask.bool()
+            mask = ~mask
 
             # Add a large negative value to the masked positions
             scaled_dot_product = scaled_dot_product.masked_fill(mask, float('-inf'))
