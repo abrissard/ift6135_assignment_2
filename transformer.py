@@ -104,10 +104,13 @@ class MultiHeadedAttention(nn.Module):
 
             print("Mask og shape : ")
             print(mask.shape)
-            mask = mask.unsqueeze(1).unsqueeze(2)
 
+            mask = mask.unsqueeze(1)  # for num_heads dimension
+            mask = mask.unsqueeze(2)  # for sequence_length dimension
             print("Mask unsqueezed shape : ")
             print(mask.shape)
+
+            mask = mask.bool()
 
             # Add a large negative value to the masked positions
             scaled_dot_product = scaled_dot_product.masked_fill(mask, float('-inf'))
@@ -343,11 +346,16 @@ class PreNormAttentionBlock(nn.Module):
         
         
     def forward(self, x, mask=None):
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        
+        norm_1_outputs = self.layer_norm_1(x)
+        attention_outputs = self.attn(norm_1_outputs, mask)
+        x = x + attention_outputs
 
+        norm_2_outputs = self.layer_norm_2(x)
+        linear_outputs = self.linear(norm_2_outputs)
+        outputs = x + linear_outputs
+
+        return outputs
 
 class Transformer(nn.Module):
     
@@ -410,14 +418,15 @@ class Transformer(nn.Module):
         cls_token = self.cls_token.repeat(B, 1, 1)
         x = torch.cat([cls_token, x], dim=1)
         x = x + self.pos_embedding[:,:T+1]
+
         #Add dropout and then the transformer (remember to update the mask because of the CLS token)
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
+        x = self.dropout(x)
+        mask = torch.cat([torch.ones(B, 1).long(), mask], dim=1)
+        for layer in self.transformer:
+            x = layer(x, mask)
         
         #Take the cls token representation and send it to mlp_head
- 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        cls_token = x[:,0]
+        output = self.mlp_head(cls_token)
+        return output
+    
