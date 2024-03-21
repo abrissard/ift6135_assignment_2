@@ -51,11 +51,12 @@ class MultiHeadedAttention(nn.Module):
         super(MultiHeadedAttention, self).__init__()
         self.head_size = head_size
         self.num_heads = num_heads
-        self.sequence_length = sequence_length
 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
+        self.linear_queries = nn.Linear(head_size * num_heads, head_size * num_heads)
+        self.linear_keys = nn.Linear(head_size * num_heads, head_size * num_heads)
+        self.linear_values = nn.Linear(head_size * num_heads, head_size * num_heads)
+
+        self.linear = nn.Linear(head_size * num_heads, head_size * num_heads)
 
     def get_attention_weights(self, queries, keys, mask=None):
         """Compute the attention weights.
@@ -98,7 +99,18 @@ class MultiHeadedAttention(nn.Module):
         
         # Apply the mask to the scaled dot product
         if mask is not None:
-            scaled_dot_product = scaled_dot_product.masked_fill(mask.unsqueeze(1).unsqueeze(2), float('-inf'))
+            print("scaled_dot_product shape : ")
+            print(scaled_dot_product.shape)
+
+            print("Mask og shape : ")
+            print(mask.shape)
+            mask = mask.unsqueeze(1).unsqueeze(2)
+
+            print("Mask unsqueezed shape : ")
+            print(mask.shape)
+
+            # Add a large negative value to the masked positions
+            scaled_dot_product = scaled_dot_product.masked_fill(mask, float('-inf'))
         
         # Apply the softmax function to get the attention weights
         attention_weights = F.softmax(scaled_dot_product, dim=-1)
@@ -147,10 +159,16 @@ class MultiHeadedAttention(nn.Module):
             the sequences in the batch, and all positions in each sequence. 
         """
 
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+        # Compute the attention weights
+        attention_weights = self.get_attention_weights(queries, keys, mask)
+        
+        # Apply the attention weights to the values
+        attended_values = torch.matmul(attention_weights, values)
+        
+        # Merge the heads
+        outputs = self.merge_heads(attended_values)
+        
+        return outputs
 
     def split_heads(self, tensor):
         """Split the head vectors.
@@ -244,10 +262,19 @@ class MultiHeadedAttention(nn.Module):
             Tensor containing the output of multi-headed attention for all the
             sequences in the batch, and all positions in each sequence.
         """
-        # ==========================
-        # TODO: Write your code here
-        # ==========================
-        pass
+            
+        # Split the hidden states into queries, keys, and values
+        queries = self.split_heads(self.linear_queries(hidden_states))
+        keys = self.split_heads(self.linear_keys(hidden_states))
+        values = self.split_heads(self.linear_values(hidden_states))
+        
+        # Apply the attention
+        attention_outputs = self.apply_attention(queries, keys, values, mask)
+
+        # Linear projection
+        outputs = self.linear(attention_outputs)
+        
+        return outputs
 
 class PostNormAttentionBlock(nn.Module):
     
